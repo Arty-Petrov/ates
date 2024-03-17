@@ -1,0 +1,67 @@
+version: '3.8'
+services:
+#  nest-api:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: nest-api
+#    restart: always
+#    ports:
+#      - '3000:3000'
+#    depends_on:
+#      - nest-postgres
+#    env_file:
+#      - .env
+#
+    zookeeper:
+      image: 'bitnami/zookeeper:latest'
+      ports:
+        - '2181:2181'
+      restart: always
+      environment:
+        - ALLOW_ANONYMOUS_LOGIN=yes
+
+    kafka:
+      image: 'bitnami/kafka:latest'
+      ports:
+        - '9093:9093'
+        - '9092:9093'
+      restart: always
+      environment:
+        - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+        - ALLOW_PLAINTEXT_LISTENER=yes
+        - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+        - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+        - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+        - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+      depends_on:
+        - zookeeper
+
+    kafka-ui:
+      image: provectuslabs/kafka-ui:latest
+      container_name: kafka-ui
+      depends_on:
+        - zookeeper
+        - kafka
+      ports:
+        - '8081:8080'
+      restart: always
+      env_file:
+        - .env
+
+    auth-postgres:
+      image: postgres:16.2-alpine3.19
+      container_name: ates-postgres
+      restart: always
+      ports:
+       - '5432:5432'
+      environment:
+        POSTGRES_USER: "admin"
+        POSTGRES_PASSWORD: "password"
+        POSTGRES_DB: ${PG_DB}
+      volumes:
+        - ates:/var/lib/postgresql/data
+
+volumes:
+  ates:
+    name: ates-db

@@ -1,0 +1,32 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../node_modules/@prisma/tracker-client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("PG_URL")
+}
+
+model TrackerUser {
+    id       Int    @id @default(autoincrement())
+    publicId String @unique @db.Uuid
+    email    String
+    name     String
+    role     String
+    Task     Task[]
+
+    @@unique([email])
+    @@map("tracker_user")
+}
+
+model Task {
+    id          Int         @id @default(autoincrement())
+    publicId    String      @unique @default(uuid())
+    description String
+    isComplete  Boolean     @default(false)
+    assigny     TrackerUser @relation(fields: [assignyId], references: [id])
+    assignyId   Int
+
+    @@map("task")
+}
